@@ -1,3 +1,5 @@
 *.png
 *.hex
 *.hex.gz
+*.txt
+*.txt.gz

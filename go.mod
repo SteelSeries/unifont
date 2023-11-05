@@ -1,4 +1,4 @@
-module github.com/ToadKing/unifont
+module github.com/toadking/unifont
 
 go 1.21
 

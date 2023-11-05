@@ -39,16 +39,16 @@ func (f *unifont) Glyph(dot fixed.Point26_6, r rune) (dr image.Rectangle, mask i
 	// because we generate the glyph images at runtime
 	if g != nil {
 		x, y := dot.X.Round(), dot.Y.Round()
-		var width int
-		if g.wide {
-			width = unifontWideWidth
+		if g.combining <= 0 {
+			// combining character, offset the draw
+			x += int(g.combining)
 		} else {
-			width = unifontNormalWidth
+			// non-combining character, advance dot
+			advance = fixed.I(int(g.width))
 		}
-		dr = image.Rect(x, y, x+width, y+unifontHeight)
+		dr = image.Rect(x, y, x+int(g.width), y+unifontHeight)
 		mask = f.glyphImage(g)
 		maskp = image.Point{}
-		advance = fixed.I(width)
 	}
 	return
 }
@@ -56,13 +56,15 @@ func (f *unifont) Glyph(dot fixed.Point26_6, r rune) (dr image.Rectangle, mask i
 func (f *unifont) GlyphBounds(r rune) (bounds fixed.Rectangle26_6, advance fixed.Int26_6, ok bool) {
 	g, ok := f.findGlyph(r)
 	if g != nil {
-		if g.wide {
-			bounds = fixed.R(0, 0, unifontWideWidth, unifontHeight)
-			advance = fixed.I(unifontWideWidth)
+		xOffset := 0
+		if g.combining <= 0 {
+			// combining character, offset the bounding box
+			xOffset = int(g.combining)
 		} else {
-			bounds = fixed.R(0, 0, unifontNormalWidth, unifontHeight)
-			advance = fixed.I(unifontNormalWidth)
+			// non-combining character, advance dot
+			advance = fixed.I(int(g.width))
 		}
+		bounds = fixed.R(xOffset, 0, xOffset+int(g.width), unifontHeight)
 	}
 	return
 }
@@ -70,27 +72,24 @@ func (f *unifont) GlyphBounds(r rune) (bounds fixed.Rectangle26_6, advance fixed
 func (f *unifont) GlyphAdvance(r rune) (advance fixed.Int26_6, ok bool) {
 	g, ok := f.findGlyph(r)
 	if g != nil {
-		if g.wide {
-			advance = fixed.I(unifontWideWidth)
-		} else {
-			advance = fixed.I(unifontNormalWidth)
+		if g.combining > 0 {
+			advance = fixed.I(int(g.width))
 		}
 	}
 	return
 }
 
 func (f *unifont) Kern(r0, r1 rune) fixed.Int26_6 {
-	// TODO: Maybe try to handle some combining characters?
-	return fixed.I(0)
+	return 0
 }
 
 func (f *unifont) Metrics() font.Metrics {
 	return font.Metrics{
-		Height:     fixed.I(16),
-		Ascent:     fixed.I(16),
-		Descent:    fixed.I(0),
-		XHeight:    fixed.I(16),
-		CapHeight:  fixed.I(16),
+		Height:     fixed.I(unifontHeight),
+		Ascent:     fixed.I(unifontHeight),
+		Descent:    0,
+		XHeight:    fixed.I(unifontHeight),
+		CapHeight:  fixed.I(unifontHeight),
 		CaretSlope: image.Pt(0, 1),
 	}
 }

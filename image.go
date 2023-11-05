@@ -6,8 +6,8 @@ import (
 )
 
 type unifontImage struct {
-	pix  []byte
-	wide bool
+	pix   []byte
+	width uint8
 }
 
 func monochromeAlphaConversion(c color.Color) color.Color {
@@ -27,34 +27,15 @@ func (i *unifontImage) ColorModel() color.Model {
 }
 
 func (i *unifontImage) Bounds() image.Rectangle {
-	if i.wide {
-		return image.Rect(0, 0, unifontWideWidth, unifontHeight)
-	} else {
-		return image.Rect(0, 0, unifontNormalWidth, unifontHeight)
-	}
+	return image.Rect(0, 0, int(i.width), unifontHeight)
 }
 
 func (i *unifontImage) At(x, y int) color.Color {
-	if x < 0 || y < 0 {
-		return color.Alpha16{}
-	}
-	if y >= unifontHeight {
-		return color.Alpha16{}
-	}
-	if i.wide && x >= unifontWideWidth {
-		return color.Alpha16{}
-	}
-	if !i.wide && x >= unifontNormalWidth {
+	if x < 0 || y < 0 || x >= int(i.width) || y >= unifontHeight {
 		return color.Alpha16{}
 	}
 
-	var width int
-	if i.wide {
-		width = unifontWideWidth
-	} else {
-		width = unifontNormalWidth
-	}
-	offset := x + y*width
+	offset := x + y*int(i.width)
 	byteOffset := offset >> 3
 	bitOffset := 7 - (offset & 7)
 	val := i.pix[byteOffset] & (1 << bitOffset)
@@ -66,14 +47,8 @@ func (i *unifontImage) At(x, y int) color.Color {
 }
 
 func (f *unifont) glyphImage(g *glyph) *unifontImage {
-	var numPix uint32
-	if g.wide {
-		numPix = unifontHeight * unifontWideWidth
-	} else {
-		numPix = unifontHeight * unifontNormalWidth
-	}
 	return &unifontImage{
-		pix:  f.chardata[g.offset : g.offset+numPix>>3],
-		wide: g.wide,
+		pix:   f.chardata[g.offset : g.offset+uint32(g.width)*unifontHeight>>3],
+		width: g.width,
 	}
 }

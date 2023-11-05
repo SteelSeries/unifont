@@ -20,9 +20,10 @@ const (
 )
 
 type glyph struct {
-	r      rune
-	offset uint32
-	wide   bool
+	r         rune
+	offset    uint32
+	width     uint8
+	combining int8
 }
 
 type unifont struct {
@@ -32,7 +33,9 @@ type unifont struct {
 	placeholder    *glyph
 }
 
-func parseStream(s io.Reader) (*unifont, error) {
+// Creates a new golang.org/x/image/font.Face object for the supplied Unifont .hex file from an
+// io.Reader
+func ParseHex(s io.Reader) (*unifont, error) {
 	// should be large enough to not need to grow
 	glyphs := make([]glyph, 0, 130000)
 	chardata := bytes.NewBuffer(make([]byte, 0, 4*1024*1024))
@@ -70,11 +73,11 @@ func parseStream(s io.Reader) (*unifont, error) {
 			return nil, err
 		}
 
-		var wide bool
+		var width uint8
 		if len(charbits) == 16 {
-			wide = false
+			width = unifontNormalWidth
 		} else if len(charbits) == 32 {
-			wide = true
+			width = unifontWideWidth
 		} else {
 			return nil, errors.New("bad character width")
 		}
@@ -85,9 +88,10 @@ func parseStream(s io.Reader) (*unifont, error) {
 		}
 
 		glyphs = append(glyphs, glyph{
-			r:      r,
-			offset: uint32(writetotal),
-			wide:   wide,
+			r:         r,
+			offset:    uint32(writetotal),
+			width:     width,
+			combining: 0x7F,
 		})
 
 		if r == 0xFFFD {
@@ -112,19 +116,19 @@ func parseStream(s io.Reader) (*unifont, error) {
 	return r, nil
 }
 
-// Creates a new "golang.org/x/image/font".Face object for the supplied Unifont .hex file
-func NewFromHex(filename string) (*unifont, error) {
+// Creates a new golang.org/x/image/font.Face object for the supplied Unifont .hex file
+func ParseHexFile(filename string) (*unifont, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
-	return parseStream(f)
+	return ParseHex(f)
 }
 
-// Creates a new "golang.org/x/image/font".Face object for the supplied Unifont .hex.gz file
-func NewFromHexGz(filename string) (*unifont, error) {
+// Creates a new golang.org/x/image/font.Face object for the supplied Unifont .hex.gz file
+func ParseHexGzFile(filename string) (*unifont, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -136,5 +140,5 @@ func NewFromHexGz(filename string) (*unifont, error) {
 	}
 	defer gz.Close()
 
-	return parseStream(gz)
+	return ParseHex(gz)
 }

@@ -5,7 +5,7 @@ import (
 	"image/png"
 	"os"
 
-	"github.com/ToadKing/unifont"
+	"github.com/toadking/unifont"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
@@ -13,12 +13,16 @@ import (
 )
 
 func main() {
-	testString := "Hello World! 🙂🫵\uD7FF\uE000\U0001FFFF\U000F1C3F\U000FFFFE\U000FFFFF\U00100000\U0010FFFF\000"
+	testString := "He\u0300ll\U0000FB1Eo World! 🙂🫵\uD7FF\uE000\U0001FFFF\U000F1C3F\U000FFFFE\U000FFFFF\U00100000\U0010FFFF\000"
 
 	bg := image.NewRGBA(image.Rect(0, 0, 500, 300))
 	fg := image.Black
 
-	uf, err := unifont.NewFromHexGz("unifont_all-15.1.04.hex.gz")
+	uf, err := unifont.ParseHexGzFile("unifont_all-15.1.04.hex.gz")
+	if err != nil {
+		panic(err)
+	}
+	err = uf.CombiningInfoGzFile("combining.txt.gz")
 	if err != nil {
 		panic(err)
 	}
