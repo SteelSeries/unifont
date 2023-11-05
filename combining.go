@@ -20,7 +20,7 @@ import (
 //	sort -u **/*-combining.txt > combining.txt
 //
 // This will generate a combined.txt file containing all the combining character offsets.
-func (u *unifont) CombiningInfo(s io.Reader) error {
+func (u *Unifont) CombiningInfo(s io.Reader) error {
 
 	scanner := bufio.NewScanner(s)
 
@@ -71,7 +71,7 @@ func (u *unifont) CombiningInfo(s io.Reader) error {
 }
 
 // Parse combining info from a combining.txt file.
-func (u *unifont) CombiningInfoFile(filename string) error {
+func (u *Unifont) CombiningInfoFile(filename string) error {
 	f, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (u *unifont) CombiningInfoFile(filename string) error {
 }
 
 // Parse combining info from a combining.txt.gz stream.
-func (u *unifont) CombiningInfoGzFile(filename string) error {
+func (u *Unifont) CombiningInfoGzFile(filename string) error {
 	f, err := os.Open(filename)
 	if err != nil {
 		return err

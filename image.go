@@ -46,7 +46,7 @@ func (i *unifontImage) At(x, y int) color.Color {
 	}
 }
 
-func (f *unifont) glyphImage(g *glyph) *unifontImage {
+func (f *Unifont) glyphImage(g *glyph) *unifontImage {
 	return &unifontImage{
 		pix:   f.chardata[g.offset : g.offset+uint32(g.width)*unifontHeight>>3],
 		width: g.width,

@@ -11,7 +11,7 @@ import (
 // Helper function for finding the glyph structure for a supplied rune. If the glyph is not found,
 // the function returns false and the placeholder glyph (codepoint U+FFDF) if available. This is to
 // match the expected behavior of the Glyph/GlyphBounds/GlyphAdvance interface functions.
-func (f *unifont) findGlyph(r rune) (*glyph, bool) {
+func (f *Unifont) findGlyph(r rune) (*glyph, bool) {
 	if r < 0 {
 		return f.placeholder, false
 	}
@@ -29,12 +29,12 @@ func (f *unifont) findGlyph(r rune) (*glyph, bool) {
 	return &f.glyphs[int(f.lastContinuous)+i], true
 }
 
-func (f *unifont) Close() error {
+func (f *Unifont) Close() error {
 	// Because we read the entire font into memory, this is a no-op.
 	return nil
 }
 
-func (f *unifont) Glyph(dot fixed.Point26_6, r rune) (dr image.Rectangle, mask image.Image, maskp image.Point, advance fixed.Int26_6, ok bool) {
+func (f *Unifont) Glyph(dot fixed.Point26_6, r rune) (dr image.Rectangle, mask image.Image, maskp image.Point, advance fixed.Int26_6, ok bool) {
 	g, ok := f.findGlyph(r)
 	// because we generate the glyph images at runtime
 	if g != nil {
@@ -53,7 +53,7 @@ func (f *unifont) Glyph(dot fixed.Point26_6, r rune) (dr image.Rectangle, mask i
 	return
 }
 
-func (f *unifont) GlyphBounds(r rune) (bounds fixed.Rectangle26_6, advance fixed.Int26_6, ok bool) {
+func (f *Unifont) GlyphBounds(r rune) (bounds fixed.Rectangle26_6, advance fixed.Int26_6, ok bool) {
 	g, ok := f.findGlyph(r)
 	if g != nil {
 		xOffset := 0
@@ -69,7 +69,7 @@ func (f *unifont) GlyphBounds(r rune) (bounds fixed.Rectangle26_6, advance fixed
 	return
 }
 
-func (f *unifont) GlyphAdvance(r rune) (advance fixed.Int26_6, ok bool) {
+func (f *Unifont) GlyphAdvance(r rune) (advance fixed.Int26_6, ok bool) {
 	g, ok := f.findGlyph(r)
 	if g != nil {
 		if g.combining > 0 {
@@ -79,11 +79,11 @@ func (f *unifont) GlyphAdvance(r rune) (advance fixed.Int26_6, ok bool) {
 	return
 }
 
-func (f *unifont) Kern(r0, r1 rune) fixed.Int26_6 {
+func (f *Unifont) Kern(r0, r1 rune) fixed.Int26_6 {
 	return 0
 }
 
-func (f *unifont) Metrics() font.Metrics {
+func (f *Unifont) Metrics() font.Metrics {
 	return font.Metrics{
 		Height:     fixed.I(unifontHeight),
 		Ascent:     fixed.I(unifontHeight),
