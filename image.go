@@ -8,6 +8,7 @@ import (
 type unifontImage struct {
 	pix   []byte
 	width uint8
+	m     int
 }
 
 func monochromeAlphaConversion(c color.Color) color.Color {
@@ -27,15 +28,15 @@ func (i *unifontImage) ColorModel() color.Model {
 }
 
 func (i *unifontImage) Bounds() image.Rectangle {
-	return image.Rect(0, 0, int(i.width), unifontHeight)
+	return image.Rect(0, 0, int(i.width)*i.m, unifontHeight*i.m)
 }
 
 func (i *unifontImage) At(x, y int) color.Color {
-	if x < 0 || y < 0 || x >= int(i.width) || y >= unifontHeight {
+	if x < 0 || y < 0 || x >= int(i.width)*i.m || y >= unifontHeight*i.m {
 		return color.Alpha16{}
 	}
 
-	offset := x + y*int(i.width)
+	offset := x/i.m + y/i.m*int(i.width)
 	byteOffset := offset >> 3
 	bitOffset := 7 - (offset & 7)
 	val := i.pix[byteOffset] & (1 << bitOffset)
@@ -46,9 +47,10 @@ func (i *unifontImage) At(x, y int) color.Color {
 	}
 }
 
-func (f *Unifont) glyphImage(g *glyph) *unifontImage {
+func (f *Unifont) glyphImage(g *glyph, multiplier int) *unifontImage {
 	return &unifontImage{
 		pix:   f.chardata[g.offset : g.offset+uint32(g.width)*unifontHeight>>3],
 		width: g.width,
+		m:     multiplier,
 	}
 }

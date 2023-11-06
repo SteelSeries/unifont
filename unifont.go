@@ -13,12 +13,6 @@ import (
 	"strings"
 )
 
-const (
-	unifontHeight      = 16
-	unifontNormalWidth = 8
-	unifontWideWidth   = 16
-)
-
 type glyph struct {
 	r         rune
 	offset    uint32
@@ -26,6 +20,8 @@ type glyph struct {
 	combining int8
 }
 
+// Unifont is a pared Unifont .hex file. It is safe to use concurrently with multiple font faces as
+// long as no methods are called on it after being supplied to a font face.
 type Unifont struct {
 	chardata       []byte
 	glyphs         []glyph
@@ -33,9 +29,31 @@ type Unifont struct {
 	placeholder    *glyph
 }
 
-// Creates a new golang.org/x/image/font.Face object for the supplied Unifont .hex file from an
-// io.Reader
-func ParseHex(s io.Reader) (*Unifont, error) {
+// Optional flags to supply to the Unifont parsing functions
+type UnifontOptions int
+
+const (
+	// Skip parsing characters in the Private Use Areas.
+	NoPAUs UnifontOptions = iota
+)
+
+const (
+	unifontHeight      = 16
+	unifontNormalWidth = 8
+	unifontWideWidth   = 16
+)
+
+// Parses the supplied Unifont .hex file from an input stream
+func ParseHex(s io.Reader, options ...UnifontOptions) (*Unifont, error) {
+	noPAUs := false
+
+	for _, option := range options {
+		switch option {
+		case NoPAUs:
+			noPAUs = true
+		}
+	}
+
 	// should be large enough to not need to grow
 	glyphs := make([]glyph, 0, 130000)
 	chardata := bytes.NewBuffer(make([]byte, 0, 4*1024*1024))
@@ -63,6 +81,14 @@ func ParseHex(s io.Reader) (*Unifont, error) {
 			return nil, errors.New("hex file not sorted")
 		}
 		lastRune = r
+
+		// skip PAU runes if skip flag is enabled
+		if noPAUs &&
+			((r >= 0xE000 && r <= 0xF8FF) ||
+				(r >= 0xF0000 && r <= 0xFFFFF) ||
+				(r >= 0x100000 && r <= 0x10FFFF)) {
+			continue
+		}
 
 		if r == lastContinuous+1 {
 			lastContinuous = r
@@ -116,19 +142,19 @@ func ParseHex(s io.Reader) (*Unifont, error) {
 	return r, nil
 }
 
-// Creates a new golang.org/x/image/font.Face object for the supplied Unifont .hex file
-func ParseHexFile(filename string) (*Unifont, error) {
+// Parses the supplied Unifont .hex file from a file
+func ParseHexFile(filename string, options ...UnifontOptions) (*Unifont, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
-	return ParseHex(f)
+	return ParseHex(f, options...)
 }
 
-// Creates a new golang.org/x/image/font.Face object for the supplied Unifont .hex.gz file
-func ParseHexGzFile(filename string) (*Unifont, error) {
+// Parses the supplied Unifont .hex file from a gzipped file
+func ParseHexGzFile(filename string, options ...UnifontOptions) (*Unifont, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -140,5 +166,5 @@ func ParseHexGzFile(filename string) (*Unifont, error) {
 	}
 	defer gz.Close()
 
-	return ParseHex(gz)
+	return ParseHex(gz, options...)
 }

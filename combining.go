@@ -30,7 +30,8 @@ func (u *Unifont) CombiningInfo(s io.Reader) error {
 		g         *glyph
 		combining int8
 	}
-	changes := make(map[rune]change)
+	// should be large enough to not need to grow
+	changes := make(map[rune]change, 3000)
 
 	for scanner.Scan() {
 		parts := strings.Split(scanner.Text(), ":")
