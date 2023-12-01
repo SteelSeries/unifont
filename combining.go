@@ -21,7 +21,6 @@ import (
 //
 // This will generate a combined.txt file containing all the combining character offsets.
 func (u *Unifont) CombiningInfo(s io.Reader) error {
-
 	scanner := bufio.NewScanner(s)
 
 	// To avoid modifying info in case of an error, save all the changes we'll do before we
