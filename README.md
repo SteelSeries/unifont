@@ -1,5 +1,7 @@
 # unifont
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/steelseries/unifont.svg)](https://pkg.go.dev/github.com/steelseries/unifont)
+
 A go library for using [GNU Unifont](https://unifoundry.com/unifont/index.html) with Go. Implements
 the `golang.org/x/image/font.Face` interface for using with that package.
 
